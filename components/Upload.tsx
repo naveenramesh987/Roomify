@@ -2,6 +2,7 @@ import { CheckCircle2, ImageIcon, UploadIcon } from "lucide-react";
 import React, { useState } from "react";
 import { useOutletContext } from "react-router";
 import {
+  FILE_SIZE_LIMIT,
   PROGRESS_INTERVAL_MS,
   PROGRESS_STEP,
   REDIRECT_DELAY_MS,
@@ -15,10 +16,16 @@ const Upload = ({ onComplete }: UploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const { isSignedIn } = useOutletContext<AuthContext>();
 
   const processFile = (selected: File) => {
+    if (selected.size > FILE_SIZE_LIMIT) {
+      setError("File exceeds the 50 MB limit. Please choose a smaller file.");
+      return;
+    }
+    setError(null);
     setFile(selected);
     setProgress(0);
 
@@ -90,6 +97,7 @@ const Upload = ({ onComplete }: UploadProps) => {
                 : "Sign in or sign up with Puter to upload"}
             </p>
             <p className="help">Maximum file size: 50 MB</p>
+            {error && <p className="error">{error}</p>}
           </div>
         </div>
       ) : (

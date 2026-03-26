@@ -1,5 +1,18 @@
-const VisualizerId = () => {
-  return <div>VisualizerId</div>;
-}
+import { useLocation } from "react-router";
 
-export default VisualizerId
+const VisualizerId = () => {
+  const { state } = useLocation();
+  const base64Image: string | undefined = state?.base64Image;
+
+  return (
+    <div>
+      {base64Image ? (
+        <img src={base64Image} alt="Uploaded room" />
+      ) : (
+        <div>No image available</div>
+      )}
+    </div>
+  );
+};
+
+export default VisualizerId;
