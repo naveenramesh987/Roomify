@@ -18,61 +18,66 @@ export const getCurrentUser = async () => {
 
 export const createProject = async ({
   item,
+  visibility = "private",
 }: CreateProjectParams): Promise<DesignItem | null | undefined> => {
   const projectId = item.id;
-  const hosting = await getOrCreateHostingConfig();
 
-  const hostedSource = projectId
-    ? await uploadImageToHosting({
-        hosting,
-        url: item.sourceImage,
-        projectId,
-        label: "source",
-      })
-    : null;
+  try {
+    const hosting = await getOrCreateHostingConfig();
 
-  const hostedRender =
-    projectId && item.renderedImage
+    const hostedSource = projectId
       ? await uploadImageToHosting({
           hosting,
-          url: item.renderedImage,
+          url: item.sourceImage,
           projectId,
-          label: "rendered",
+          label: "source",
         })
       : null;
 
-  const resolvedSource =
-    hostedSource?.url ||
-    (isHostedUrl(item.sourceImage) ? item.sourceImage : "");
+    const hostedRender =
+      projectId && item.renderedImage
+        ? await uploadImageToHosting({
+            hosting,
+            url: item.renderedImage,
+            projectId,
+            label: "rendered",
+          })
+        : null;
 
-  if (!resolvedSource) {
-    console.warn("Failed to host source image, skipping save.");
-    return null;
-  }
+    const resolvedSource =
+      hostedSource?.url ||
+      (isHostedUrl(item.sourceImage) ? item.sourceImage : "");
 
-  const resolvedRender = hostedRender?.url
-    ? hostedRender?.url
-    : item.renderedImage && isHostedUrl(item.renderedImage)
-      ? item.renderedImage
-      : undefined;
+    if (!resolvedSource) {
+      console.warn("Failed to host source image, skipping save.");
+      return null;
+    }
 
-  const {
-    sourcePath: _sourcePath,
-    renderedPath: _renderedPath,
-    publicPath: _publicPath,
-    ...rest
-  } = item;
+    let resolvedRender: string | undefined;
+    if (hostedRender?.url) {
+      resolvedRender = hostedRender.url;
+    } else if (item.renderedImage && isHostedUrl(item.renderedImage)) {
+      resolvedRender = item.renderedImage;
+    }
 
-  const payload = {
-    ...rest,
-    sourceImage: resolvedSource,
-    renderedImage: resolvedRender,
-  };
+    const {
+      sourcePath: _sourcePath,
+      renderedPath: _renderedPath,
+      publicPath: _publicPath,
+      ...rest
+    } = item;
 
-  try {
+    const payload: DesignItem = {
+      ...rest,
+      sourceImage: resolvedSource,
+      renderedImage: resolvedRender,
+      isPublic: visibility === "public",
+    };
+
+    await puter.kv.set(`project:${projectId}`, payload);
     return payload;
   } catch (e) {
-    console.log("Error saving project to Puter:", e);
+    console.error("Error saving project to Puter:", e);
     return null;
   }
 };
