@@ -1,17 +1,21 @@
 import { useLocation } from "react-router";
 
 const VisualizerId = () => {
-  const { state } = useLocation();
-  const base64Image: string | undefined = state?.base64Image;
+  const location = useLocation();
+  const { initialImage, name } = location.state || {};
 
   return (
-    <div>
-      {base64Image ? (
-        <img src={base64Image} alt="Uploaded room" />
-      ) : (
-        <div>No image available</div>
-      )}
-    </div>
+    <section>
+      <h1>{name || "Untitled Project"}</h1>
+      <div className="visualizer">
+        {initialImage && (
+          <div className="image-container">
+            <h2>Source Image</h2>
+            <img src={initialImage} alt="source" />
+          </div>
+        )}
+      </div>
+    </section>
   );
 };
 
