@@ -1,5 +1,6 @@
 interface AuthState {
   isSignedIn: boolean;
+  isAuthReady: boolean;
   userName: string | null;
   userId: string | null;
 }
@@ -87,6 +88,7 @@ interface CardProps {
 
 type AuthContext = {
   isSignedIn: boolean;
+  isAuthReady: boolean;
   userName: string | null;
   userId: string | null;
   refreshAuth: () => Promise<boolean>;
