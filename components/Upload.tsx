@@ -18,7 +18,7 @@ const Upload = ({ onComplete }: UploadProps) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { isSignedIn } = useOutletContext<AuthContext>();
+  const { isSignedIn, isAuthReady } = useOutletContext<AuthContext>();
 
   useEffect(() => {
     return () => {
@@ -35,7 +35,7 @@ const Upload = ({ onComplete }: UploadProps) => {
 
   const processFile = useCallback(
     (file: File) => {
-      if (!isSignedIn) return;
+      if (isAuthReady && !isSignedIn) return;
 
       setFile(file);
       setProgress(0);
@@ -45,8 +45,9 @@ const Upload = ({ onComplete }: UploadProps) => {
         setFile(null);
         setProgress(0);
       };
-      reader.onloadend = () => {
-        const base64Data = reader.result as string;
+      reader.onload = () => {
+        const base64Data = reader.result;
+        if (typeof base64Data !== "string") return;
 
         intervalRef.current = setInterval(() => {
           setProgress((prev) => {
@@ -68,12 +69,12 @@ const Upload = ({ onComplete }: UploadProps) => {
       };
       reader.readAsDataURL(file);
     },
-    [isSignedIn, onComplete],
+    [isAuthReady, isSignedIn, onComplete],
   );
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    if (!isSignedIn) return;
+    if (isAuthReady && !isSignedIn) return;
     setIsDragging(true);
   };
 
@@ -81,24 +82,29 @@ const Upload = ({ onComplete }: UploadProps) => {
     setIsDragging(false);
   };
 
+  const validateFile = (f: File): boolean => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const maxSize = 50 * 1024 * 1024;
+    return allowedTypes.includes(f.type) && f.size <= maxSize;
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
 
-    if (!isSignedIn) return;
+    if (isAuthReady && !isSignedIn) return;
 
     const droppedFile = e.dataTransfer.files[0];
-    const allowedTypes = ["image/jpeg", "image/png"];
-    if (droppedFile && allowedTypes.includes(droppedFile.type)) {
+    if (droppedFile && validateFile(droppedFile)) {
       processFile(droppedFile);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isSignedIn) return;
+    if (isAuthReady && !isSignedIn) return;
 
     const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
+    if (selectedFile && validateFile(selectedFile)) {
       processFile(selectedFile);
     }
   };
@@ -116,7 +122,7 @@ const Upload = ({ onComplete }: UploadProps) => {
             type="file"
             className="drop-input"
             accept=".jpg,.jpeg,.png,.webp"
-            disabled={!isSignedIn}
+            disabled={isAuthReady && !isSignedIn}
             onChange={handleChange}
           />
 
@@ -125,9 +131,9 @@ const Upload = ({ onComplete }: UploadProps) => {
               <UploadIcon size={20} />
             </div>
             <p>
-              {isSignedIn
-                ? "Click to upload or just drag and drop"
-                : "Sign in or sign up with Puter to upload"}
+              {isAuthReady && !isSignedIn
+                ? "Sign in or sign up with Puter to upload"
+                : "Click to upload or just drag and drop"}
             </p>
             <p className="help">Maximum file size 50 MB.</p>
           </div>

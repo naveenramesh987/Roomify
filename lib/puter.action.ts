@@ -25,8 +25,8 @@ const kvSaveProject = async (payload: DesignItem): Promise<DesignItem | null> =>
   const record = { ...payload, updatedAt: new Date().toISOString() };
   const isBase64 = (s?: string) => typeof s === "string" && s.startsWith("data:");
 
-  // Try full record first; if kv rejects (too large), strip base64 images
-  const attempts = [record, { ...record, sourceImage: isBase64(record.sourceImage) ? "" : record.sourceImage, renderedImage: isBase64(record.renderedImage) ? undefined : record.renderedImage }];
+  // Try full record first; if kv rejects (too large), strip only the optional base64 renderedImage
+  const attempts = [record, { ...record, renderedImage: isBase64(record.renderedImage) ? undefined : record.renderedImage }];
 
   for (const attempt of attempts) {
     try {
@@ -143,7 +143,7 @@ export const createProject = async ({
 
     if (!response.ok) {
       console.error("failed to save the project", await response.text());
-      return null;
+      return kvSaveProject(payload);
     }
 
     const data = (await response.json()) as { project?: DesignItem | null };
@@ -151,7 +151,7 @@ export const createProject = async ({
     return data?.project ?? null;
   } catch (e) {
     console.log("Failed to save project", e);
-    return null;
+    return kvSaveProject(payload);
   }
 };
 
@@ -168,7 +168,7 @@ export const getProjects = async () => {
 
     if (!response.ok) {
       console.error("Failed to fetch history", await response.text());
-      return [];
+      return kvGetProjects();
     }
 
     const data = (await response.json()) as { projects?: DesignItem[] | null };
@@ -176,7 +176,7 @@ export const getProjects = async () => {
     return Array.isArray(data?.projects) ? data?.projects : [];
   } catch (e) {
     console.error("Failed to get projects", e);
-    return [];
+    return kvGetProjects();
   }
 };
 
@@ -195,7 +195,7 @@ export const getProjectById = async ({ id }: { id: string }) => {
 
     if (!response.ok) {
       console.error("Failed to fetch project:", await response.text());
-      return null;
+      return kvGetProjectById(id);
     }
 
     const data = (await response.json()) as {
@@ -206,6 +206,6 @@ export const getProjectById = async ({ id }: { id: string }) => {
     return data?.project ?? null;
   } catch (error) {
     console.error("Failed to fetch project:", error);
-    return null;
+    return kvGetProjectById(id);
   }
 };

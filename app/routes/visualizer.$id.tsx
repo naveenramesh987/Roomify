@@ -31,7 +31,7 @@ const VisualizerId = () => {
           ...item,
           renderedImage: result.renderedImage,
           renderedPath: result.renderedPath,
-          timeStamp: Date.now(),
+          timestamp: Date.now(),
           ownerId: item.ownerId ?? userId ?? null,
           isPublic: item.isPublic ?? false,
         };
@@ -81,6 +81,9 @@ const VisualizerId = () => {
         };
         setProject(localProject);
         setCurrentImage(locationState.initialRender || null);
+      } else {
+        navigate("/", { replace: true });
+        return;
       }
       setIsProjectLoading(false);
       hasInitialGenerated.current = false;

@@ -133,10 +133,11 @@ export default function Home() {
           <div className="projects-grid">
             {projects.map(
               ({ id, name, renderedImage, sourceImage, timestamp }) => (
-                <div
+                <a
                   key={id}
                   className="project-card group"
-                  onClick={() => navigate(`/visualizer/${id}`)}
+                  href={`/visualizer/${id}`}
+                  onClick={(e) => { e.preventDefault(); navigate(`/visualizer/${id}`); }}
                 >
                   <div className="preview">
                     <img src={renderedImage || sourceImage} alt="Project" />
@@ -159,7 +160,7 @@ export default function Home() {
                       <ArrowUpRight size={18} />
                     </div>
                   </div>
-                </div>
+                </a>
               ),
             )}
           </div>
