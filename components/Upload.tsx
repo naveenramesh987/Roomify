@@ -1,73 +1,106 @@
-import { CheckCircle2, ImageIcon, UploadIcon } from "lucide-react";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useOutletContext } from "react-router";
+import { CheckCircle2, ImageIcon, UploadIcon } from "lucide-react";
 import {
-  FILE_SIZE_LIMIT,
-  PROGRESS_INTERVAL_MS,
-  PROGRESS_STEP,
+  PROGRESS_INCREMENT,
   REDIRECT_DELAY_MS,
-} from "lib/constants";
+  PROGRESS_INTERVAL_MS,
+} from "../lib/constants";
 
 interface UploadProps {
-  onComplete: (base64: string) => void;
+  onComplete?: (base64Data: string) => void;
 }
 
 const Upload = ({ onComplete }: UploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { isSignedIn } = useOutletContext<AuthContext>();
 
-  const processFile = (selected: File) => {
-    if (selected.size > FILE_SIZE_LIMIT) {
-      setError("File exceeds the 50 MB limit. Please choose a smaller file.");
-      return;
-    }
-    setError(null);
-    setFile(selected);
-    setProgress(0);
-
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      const base64 = e.target?.result as string;
-
-      const interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setTimeout(() => onComplete(base64), REDIRECT_DELAY_MS);
-            return 100;
-          }
-          return prev + PROGRESS_STEP;
-        });
-      }, PROGRESS_INTERVAL_MS);
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
+  }, []);
 
-    reader.readAsDataURL(selected);
+  const processFile = useCallback(
+    (file: File) => {
+      if (!isSignedIn) return;
+
+      setFile(file);
+      setProgress(0);
+
+      const reader = new FileReader();
+      reader.onerror = () => {
+        setFile(null);
+        setProgress(0);
+      };
+      reader.onloadend = () => {
+        const base64Data = reader.result as string;
+
+        intervalRef.current = setInterval(() => {
+          setProgress((prev) => {
+            const next = prev + PROGRESS_INCREMENT;
+            if (next >= 100) {
+              if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+              }
+              timeoutRef.current = setTimeout(() => {
+                onComplete?.(base64Data);
+                timeoutRef.current = null;
+              }, REDIRECT_DELAY_MS);
+              return 100;
+            }
+            return next;
+          });
+        }, PROGRESS_INTERVAL_MS);
+      };
+      reader.readAsDataURL(file);
+    },
+    [isSignedIn, onComplete],
+  );
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!isSignedIn) return;
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    if (!isSignedIn) return;
+
+    const droppedFile = e.dataTransfer.files[0];
+    const allowedTypes = ["image/jpeg", "image/png"];
+    if (droppedFile && allowedTypes.includes(droppedFile.type)) {
+      processFile(droppedFile);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isSignedIn) return;
-    const selected = e.target.files?.[0];
-    if (selected) processFile(selected);
-  };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (isSignedIn) setIsDragging(true);
-  };
-
-  const handleDragLeave = () => setIsDragging(false);
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (!isSignedIn) return;
-    const selected = e.dataTransfer.files?.[0];
-    if (selected) processFile(selected);
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      processFile(selectedFile);
+    }
   };
 
   return (
@@ -82,7 +115,7 @@ const Upload = ({ onComplete }: UploadProps) => {
           <input
             type="file"
             className="drop-input"
-            accept=".jpg,.jpeg,.png"
+            accept=".jpg,.jpeg,.png,.webp"
             disabled={!isSignedIn}
             onChange={handleChange}
           />
@@ -96,8 +129,7 @@ const Upload = ({ onComplete }: UploadProps) => {
                 ? "Click to upload or just drag and drop"
                 : "Sign in or sign up with Puter to upload"}
             </p>
-            <p className="help">Maximum file size: 50 MB</p>
-            {error && <p className="error">{error}</p>}
+            <p className="help">Maximum file size 50 MB.</p>
           </div>
         </div>
       ) : (
@@ -126,5 +158,4 @@ const Upload = ({ onComplete }: UploadProps) => {
     </div>
   );
 };
-
 export default Upload;
