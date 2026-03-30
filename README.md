@@ -2,13 +2,13 @@
 
 An AI-powered architectural design environment that transforms 2D floor plans into photorealistic 3D visualizations in seconds.
 
-## Overview
+## 🏠 Overview
 
 Roomify leverages high-performance AI models to bridge the gap between 2D technical drawings and immersive 3D renders. Users can upload floor plans (JPG, PNG, WebP) and instantly generate top-down 3D architectural visualizations with realistic lighting, textures, and extruded walls.
 
 The project is built on React Router 7, styled with Tailwind CSS 4, and powered by the Puter.js ecosystem for cloud storage, authentication, and AI computing.
 
-## Key Features
+## ✨ Key Features
 
 - **AI 3D Visualization** — Uses `gemini-2.0-flash-exp` (via Puter AI) to convert 2D lines into 3D geometry.
 - **Interactive Comparison** — A built-in "Before and After" slider to compare the original floor plan against the AI render.
@@ -16,7 +16,7 @@ The project is built on React Router 7, styled with Tailwind CSS 4, and powered 
 - **Authentication** — Secure sign-in/up via Puter to manage private design projects.
 - **Export Ready** — One-click download of high-resolution renders for professional use.
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 | --- | --- |
@@ -26,7 +26,7 @@ The project is built on React Router 7, styled with Tailwind CSS 4, and powered 
 | AI Model | Gemini-2.0-Flash-Image-Preview via Puter AI |
 | Icons | Lucide React |
 
-## Installation
+## 🚀 Installation
 
 1. **Clone the repository:**
 
@@ -44,7 +44,7 @@ The project is built on React Router 7, styled with Tailwind CSS 4, and powered 
 3. **Environment setup:**
    Ensure you have a Puter account. If deploying via Puter Workers, set your `VITE_PUTER_WORKER_URL` in your environment variables.
 
-## Project Structure
+## 🏗️ Project Structure
 
 ```text
 /app/routes     — Home page (upload) and Visualizer (editor/render view)
@@ -55,7 +55,7 @@ The project is built on React Router 7, styled with Tailwind CSS 4, and powered 
   constants.ts      — ROOMIFY_RENDER_PROMPT architectural instruction set
 ```
 
-## Usage
+## 🖥️ Usage
 
 ### Development
 
@@ -86,4 +86,4 @@ Once an image is uploaded, the system sends a detailed prompt to the AI, ensurin
 
 ---
 
-Built with React Router and Puter.
+Built with ❤️ using React Router and Puter.
