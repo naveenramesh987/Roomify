@@ -3,20 +3,43 @@ import { generate3DView } from "lib/ai.action";
 import { createProject, getProjectById } from "lib/puter.action";
 import { Box, Download, RefreshCcw, Share2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useOutletContext, useParams } from "react-router";
+import {
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from "react-router";
+import {
+  ReactCompareSlider,
+  ReactCompareSliderImage,
+} from "react-compare-slider";
 
 const VisualizerId = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { initialImage?: string; initialRender?: string | null; name?: string } | null;
+  const locationState = location.state as {
+    initialImage?: string;
+    initialRender?: string | null;
+    name?: string;
+  } | null;
   const { userId } = useOutletContext<AuthContext>();
   const hasInitialGenerated = useRef(false);
   const [project, setProject] = useState<DesignItem | null>(null);
   const [isProjectLoading, setIsProjectLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentImage, setCurrentImage] = useState<string | null>(locationState?.initialRender || null);
+  const [currentImage, setCurrentImage] = useState<string | null>(
+    locationState?.initialRender || null,
+  );
   const handleBack = () => navigate("/");
+
+  const handleExport = () => {
+    if (!currentImage) return;
+    const a = document.createElement("a");
+    a.href = currentImage;
+    a.download = `${project?.name || `render-${id}`}.png`;
+    a.click();
+  };
 
   const runGeneration = async (item: DesignItem) => {
     if (!id || !item.sourceImage) return;
@@ -131,14 +154,14 @@ const VisualizerId = () => {
           <div className="panel-header">
             <div className="panel-meta">
               <p>Project</p>
-              <h2>{project?.name || `Residence ${project?.id || ''}`}</h2>
+              <h2>{project?.name || `Residence ${project?.id || ""}`}</h2>
               <p className="note">Created by You</p>
             </div>
 
             <div className="panel-actions">
               <Button
                 size="sm"
-                onClick={() => {}}
+                onClick={handleExport}
                 className="export"
                 disabled={!currentImage}
               >
@@ -175,6 +198,49 @@ const VisualizerId = () => {
                     Generating your 3D visualization
                   </span>
                 </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="panel compare">
+          <div className="panel-header">
+            <div className="panel-meta">
+              <p>Comparison</p>
+              <h3>Before and After</h3>
+            </div>
+            <div className="hint">Drag to compare</div>
+          </div>
+
+          <div className="compare-stage">
+            {project?.sourceImage && currentImage ? (
+              <ReactCompareSlider
+                defaultValue={50}
+                style={{ width: "100%", height: "auto" }}
+                itemOne={
+                  <ReactCompareSliderImage
+                    src={project?.sourceImage}
+                    alt="before"
+                    className="compare-img"
+                  />
+                }
+                itemTwo={
+                  <ReactCompareSliderImage
+                    src={currentImage || project?.renderedImage}
+                    alt="after"
+                    className="compare-img"
+                  />
+                }
+              />
+            ) : (
+              <div className="compare-fallback">
+                {project?.sourceImage && (
+                  <img
+                    src={project.sourceImage}
+                    alt="Before"
+                    className="compare-img"
+                  />
+                )}
               </div>
             )}
           </div>
