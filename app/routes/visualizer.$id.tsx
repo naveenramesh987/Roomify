@@ -35,9 +35,18 @@ const VisualizerId = () => {
 
   const handleExport = () => {
     if (!currentImage) return;
+    const mime = currentImage.startsWith("data:")
+      ? currentImage.slice(5, currentImage.indexOf(";"))
+      : "";
+    const extMap: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+    };
+    const ext = extMap[mime] ?? "png";
     const a = document.createElement("a");
     a.href = currentImage;
-    a.download = `${project?.name || `render-${id}`}.png`;
+    a.download = `${project?.name || `render-${id}`}.${ext}`;
     a.click();
   };
 
@@ -215,7 +224,7 @@ const VisualizerId = () => {
           <div className="compare-stage">
             {project?.sourceImage && currentImage ? (
               <ReactCompareSlider
-                defaultValue={50}
+                defaultPosition={50}
                 style={{ width: "100%", height: "auto" }}
                 itemOne={
                   <ReactCompareSliderImage
@@ -226,7 +235,7 @@ const VisualizerId = () => {
                 }
                 itemTwo={
                   <ReactCompareSliderImage
-                    src={currentImage || project?.renderedImage}
+                    src={currentImage}
                     alt="after"
                     className="compare-img"
                   />
